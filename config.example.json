@@ -1,0 +1,19 @@
+{
+  "brand": "社区设施预约 · 本机演示版",
+  "timezone": "Asia/Shanghai",
+  "open_minute": 0,
+  "close_minute": 1440,
+  "slot_minutes": 30,
+  "booking_days": 14,
+  "cancel_notice_minutes": 120,
+  "checkin_early_minutes": 30,
+  "agreement_version": "demo-1",
+  "agreement_text": "这是使用合成信息的本机演示。请勿填写真实姓名或联系方式。保管凭证用于查看和取消预约，遗失后不能凭手机号找回。本提示不是场所服务协议或法律文本。",
+  "resources": {"shared-room": 4, "reading-room": 6, "family-room": 4},
+  "facilities": [
+    {"id": "table-games", "name": "桌游室（合成示例）", "resource": "shared-room", "max_party": 4, "durations": [30, 60, 90], "guardian_required": false},
+    {"id": "conversation", "name": "交流室（与桌游共享容量）", "resource": "shared-room", "max_party": 4, "durations": [30, 60, 90], "guardian_required": false},
+    {"id": "reading", "name": "阅读空间（合成示例）", "resource": "reading-room", "max_party": 6, "durations": [30, 60, 90], "guardian_required": false},
+    {"id": "family", "name": "亲子活动室（合成示例）", "resource": "family-room", "max_party": 4, "durations": [30, 60], "guardian_required": true}
+  ]
+}

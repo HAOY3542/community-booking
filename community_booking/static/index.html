@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>社区设施预约 · 本机演示版</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<body>
+<header><div><span class="eyebrow">LOCAL REVIEW · 合成演示</span><h1 id="brand">社区设施预约</h1><p>预约设施、保存凭证，到场后由工作人员核验。</p></div><span class="badge">仅本机 · 本机演示版</span></header>
+<main>
+<p class="notice">请只使用合成称呼。保管凭证可查看或取消预约；核验二维码只用于出示到场，两者请分开保管。演示账户信息位于本地 runtime/demo-access.txt。</p>
+<nav aria-label="主要功能"><button data-tab="book" class="active">预约设施</button><button data-tab="manage">管理预约</button><button data-tab="staff">工作人员</button></nav>
+<p id="message" role="status" aria-live="polite"></p>
+<section id="book" class="panel">
+<div class="section-title"><h2>安排一次活动</h2><span id="hours"></span></div>
+<form id="booking-form">
+<div class="grid"><label>设施<select name="facility" id="facility"></select></label><label>日期<input type="date" name="date" id="date" required></label><label>时长<select name="duration" id="duration"></select></label><label>开始时间与剩余名额<select name="start_minute" id="slot" required></select></label><label>参与人数<input type="number" name="party" min="1" max="100" value="1" required></label><label>合成称呼<input name="alias" maxlength="60" placeholder="例如：演示访客 A" required></label></div>
+<p class="muted">亲子设施的容量按参与儿童计；陪同监护人另外现场确认。实际场所需重新确认容量口径。</p>
+<label class="check"><input type="checkbox" name="guardian_confirmed">本次有成年监护人陪同（亲子设施必选）</label>
+<details><summary>演示提示与保管说明</summary><p id="agreement"></p></details>
+<label class="check"><input type="checkbox" name="agreement_accepted" required>我已阅读并同意上方演示提示</label>
+<button type="submit" class="primary">确认预约</button>
+</form>
+<div id="receipt" hidden><h3>预约已保存</h3><p>立即下载保管凭证。刷新或关闭页面后，这里不会再显示保管密钥。</p><pre id="receipt-info"></pre><img id="qr" width="240" height="240" alt="预约核验二维码"><div class="actions"><button id="download">下载保管凭证</button><button id="copy-ticket">复制核验凭证</button></div><p class="muted">本机二维码链接只在运行演示的电脑有效；用另一台手机扫码不会连接到此电脑。核验员可粘贴凭证进行演示。</p></div>
+</section>
+<section id="manage" class="panel" hidden><h2>凭保管凭证管理</h2><p>不接受手机号查找。没有保管凭证时，候选版不提供自动身份恢复。</p><form id="owner-form"><label>预约编号<input name="booking_id" autocomplete="off" maxlength="40" required></label><label>保管密钥<input type="password" name="management_secret" autocomplete="off" maxlength="100" required></label><div class="actions"><button type="submit">查看预约</button><button type="button" id="cancel">取消预约</button></div><label>临时取消原因<input name="reason" maxlength="200" placeholder="超过取消时限时，可申请管理员处理"></label><button type="button" id="cancel-request">提交取消申请</button></form><pre id="owner-result"></pre></section>
+<section id="staff" class="panel" hidden><h2>工作人员</h2><p>本地演示分别提供管理员与核验员合成账户。核验员不能查看全部预约或调整容量。</p><details id="demo-import"><summary>从本机演示文件填入账户</summary><p class="muted">仅选择本候选目录的 runtime/demo-access.txt。文件仅在当前页面读取，不上传、不保存到浏览器。</p><label>演示角色<select id="demo-role"><option value="demo-admin">管理员</option><option value="demo-verifier">核验员</option></select></label><label>本机演示账户文件<input type="file" id="demo-file" accept=".txt"></label></details><form id="login-form"><div class="grid"><label>账号<input name="username" autocomplete="username" required></label><label>演示密码<input name="password" type="password" autocomplete="current-password" required></label></div><button type="submit">登录</button></form><div id="staff-tools" hidden><p id="staff-role"></p><button id="logout">退出登录</button>
+<h3>到场核验</h3><form id="checkin-form"><label>核验凭证或带凭证的二维码地址<textarea name="ticket" rows="3" maxlength="700" required></textarea></label><div class="grid"><label>本次到场人数<input type="number" name="arrived" value="1" min="1" max="100" required></label><label class="check"><input type="checkbox" name="guardian_present">已现场确认成年监护人在场</label></div><div class="actions"><button type="button" id="inspect">核对预约</button><button type="submit" class="primary">确认到场</button><button type="button" id="next-batch">开始下一批</button></div></form><pre id="staff-result"></pre>
+<div id="admin-tools" hidden><h3>管理员工具</h3><div class="actions"><input id="admin-date" type="date" aria-label="管理日期"><button id="list-bookings">查看当日预约</button><button id="audit">查看审计记录</button></div>
+<details><summary>取消预约 / 作废旧二维码</summary><form id="admin-booking-form"><label>预约编号<input name="booking_id" required maxlength="40"></label><label>处理原因<input name="reason" required maxlength="200"></label><div class="actions"><button type="submit">管理员取消</button><button type="button" id="rotate">作废旧二维码</button></div></form></details>
+<details><summary>纠正核验记录</summary><form id="undo-form"><label>核验记录编号<input name="checkin_id" required maxlength="40"></label><label>纠正原因<input name="reason" required maxlength="200"></label><button type="submit">撤销这次核验并留痕</button></form></details>
+<details><summary>调整共享资源容量</summary><form id="capacity-form"><div class="grid"><label>资源<select name="resource" id="resource"></select></label><label>日期<input type="date" name="date" required></label><label>开始时间<input type="time" name="time" step="1800" value="10:00" required></label><label>持续分钟<input type="number" name="duration" min="30" step="30" value="60" required></label><label>容量（0 表示关闭）<input type="number" name="capacity" min="0" max="100" value="0" required></label><label>调整原因<input name="reason" required maxlength="200"></label></div><button type="submit">保存容量设置</button></form></details><pre id="admin-result"></pre></div></div></section>
+<section id="ticket-panel" class="panel" hidden><h2>到场凭证</h2><p>请向工作人员出示此凭证；出示二维码不会自动完成核验。</p><pre id="ticket-result"></pre><button id="ticket-copy">复制核验凭证</button></section>
+</main><footer>本地审阅候选版 · 不包含真实短信、支付、积分或生产数据</footer>
+</body></html>
