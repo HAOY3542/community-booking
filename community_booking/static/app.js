@@ -5,19 +5,12 @@ const display = (id, value) => { $(id).textContent = JSON.stringify(value, null,
 const time = n => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
 const data = form => Object.fromEntries(new FormData(form));
 function message(text, error = false) { $('message').textContent = text; $('message').classList.toggle('error', error); }
-async function api(path, body) {
-  const response = await fetch(path, body === undefined ? {cache:'no-store'} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-  if (!response.ok) {
-    const value = await response.json().catch(() => ({}));
-    throw new Error(value.detail || `请求失败 (${response.status})`);
-  }
-  return response.headers.get('content-type')?.includes('image/') ? response.blob() : response.json();
-}
+const api = BookingHTTP.request;
 function action(fn) { return async event => {
   event?.preventDefault();
   const button = event?.submitter || (event?.currentTarget?.tagName === 'BUTTON' ? event.currentTarget : null);
   if (button) button.disabled = true;
-  try { await fn(event); message('操作完成。'); } catch (e) { message(e.message, true); }
+  try { const result = await fn(event); message(typeof result === 'string' ? result : '操作完成。'); } catch (e) { message(e.message, true); }
   finally { if (button) button.disabled = false; }
 }; }
 function tab(id) {
@@ -47,6 +40,20 @@ async function facilityChanged() {
 $('facility').addEventListener('change', action(facilityChanged));
 $('duration').addEventListener('change', action(slots));
 $('date').addEventListener('change', action(slots));
+async function loadReceiptQr() {
+  const current = receipt;
+  const image = URL.createObjectURL(await api('/api/ticket/qr', {ticket:current.ticket}));
+  if (current !== receipt) { URL.revokeObjectURL(image); return; }
+  if (qrBlob) URL.revokeObjectURL(qrBlob);
+  qrBlob = image;
+  $('qr').src = image;
+  $('qr').hidden = false;
+}
+async function refreshAfterSuccess(text) {
+  try { await slots(); return text; }
+  catch (_) { return `${text} 可用时段刷新未完成，请重新查询。`; }
+}
+$('retry-qr').addEventListener('click', action(async () => { if (receipt) await loadReceiptQr(); }));
 $('booking-form').addEventListener('submit', action(async () => {
   const value = data($('booking-form'));
   receipt = await api('/api/bookings', {facility:value.facility, date:value.date,
@@ -58,9 +65,13 @@ $('booking-form').addEventListener('submit', action(async () => {
   $('owner-form').elements.booking_id.value = receipt.booking.id;
   $('owner-form').elements.management_secret.value = receipt.management_secret;
   if (qrBlob) URL.revokeObjectURL(qrBlob);
-  qrBlob = URL.createObjectURL(await api('/api/ticket/qr', {ticket:receipt.ticket}));
-  $('qr').src = qrBlob;
-  await slots();
+  qrBlob = null;
+  $('qr').removeAttribute('src');
+  $('qr').hidden = true;
+  let result = '预约已保存，请立即下载保管凭证。';
+  try { await loadReceiptQr(); }
+  catch (_) { result += ' 二维码暂未加载，可单独重新加载，无需再次预约。'; }
+  return refreshAfterSuccess(result);
 }));
 $('download').addEventListener('click', () => {
   if (!receipt) return;
@@ -72,7 +83,7 @@ $('download').addEventListener('click', () => {
 $('copy-ticket').addEventListener('click', action(async () => { if (receipt) await navigator.clipboard.writeText(receipt.ticket); }));
 const owner = () => ({booking_id:$('owner-form').elements.booking_id.value, management_secret:$('owner-form').elements.management_secret.value});
 $('owner-form').addEventListener('submit', action(async () => display('owner-result', await api('/api/bookings/lookup', owner()))));
-$('cancel').addEventListener('click', action(async () => { display('owner-result', await api('/api/bookings/cancel', owner())); await slots(); }));
+$('cancel').addEventListener('click', action(async () => { display('owner-result', await api('/api/bookings/cancel', owner())); return refreshAfterSuccess('取消已完成。'); }));
 $('cancel-request').addEventListener('click', action(async () => display('owner-result', await api('/api/bookings/cancel-request', {...owner(), reason:$('owner-form').elements.reason.value}))));
 function showStaff(value) { $('demo-import').hidden = true; $('staff-tools').hidden = false; $('login-form').hidden = true; $('staff-role').textContent = `${value.username} · ${value.role === 'admin' ? '管理员' : '核验员'}`; $('admin-tools').hidden = value.role !== 'admin'; }
 $('demo-file').addEventListener('change', action(async () => {
@@ -113,7 +124,7 @@ $('undo-form').addEventListener('submit', action(async () => display('admin-resu
 $('capacity-form').addEventListener('submit', action(async () => {
   const d = data($('capacity-form')); const [h,m] = d.time.split(':').map(Number);
   display('admin-result', await api('/api/admin/capacity', {resource:d.resource, date:d.date, start_minute:h*60+m,
-    duration:Number(d.duration), capacity:Number(d.capacity), reason:d.reason})); await slots();
+    duration:Number(d.duration), capacity:Number(d.capacity), reason:d.reason})); return refreshAfterSuccess('容量设置已保存。');
 }));
 $('ticket-copy').addEventListener('click', action(async () => navigator.clipboard.writeText(pageTicket)));
 (async () => {
@@ -127,7 +138,9 @@ $('ticket-copy').addEventListener('click', action(async () => navigator.clipboar
     for (const el of document.querySelectorAll('input[type=date]')) el.value = config.today;
     $('date').min = config.today;
     await facilityChanged();
-    try { showStaff(await api('/api/auth/me')); } catch (_) { /* Anonymous is the expected initial state. */ }
+    try { showStaff(await api('/api/auth/me')); } catch (error) {
+      if (error.status !== 401) message('工作人员状态读取未完成，可在工作人员页重新登录。', true);
+    }
     if (location.pathname === '/ticket') {
       pageTicket = location.hash.slice(1); history.replaceState(null, '', '/ticket'); tab('ticket-panel');
       display('ticket-result', await api('/api/ticket', {ticket:pageTicket}));

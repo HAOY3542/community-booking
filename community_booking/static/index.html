@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>社区设施预约 · 本机演示版</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>社区设施预约 · 本机演示版</title><link rel="stylesheet" href="/static/style.css"><script src="/static/request.js" defer></script><script src="/static/app.js" defer></script></head>
 <body>
 <header><div><span class="eyebrow">LOCAL REVIEW · 合成演示</span><h1 id="brand">社区设施预约</h1><p>预约设施、保存凭证，到场后由工作人员核验。</p></div><span class="badge">仅本机 · 本机演示版</span></header>
 <main>
@@ -17,7 +17,7 @@
 <label class="check"><input type="checkbox" name="agreement_accepted" required>我已阅读并同意上方演示提示</label>
 <button type="submit" class="primary">确认预约</button>
 </form>
-<div id="receipt" hidden><h3>预约已保存</h3><p>立即下载保管凭证。刷新或关闭页面后，这里不会再显示保管密钥。</p><pre id="receipt-info"></pre><img id="qr" width="240" height="240" alt="预约核验二维码"><div class="actions"><button id="download">下载保管凭证</button><button id="copy-ticket">复制核验凭证</button></div><p class="muted">本机二维码链接只在运行演示的电脑有效；用另一台手机扫码不会连接到此电脑。核验员可粘贴凭证进行演示。</p></div>
+<div id="receipt" hidden><h3>预约已保存</h3><p>立即下载保管凭证。刷新或关闭页面后，这里不会再显示保管密钥。</p><pre id="receipt-info"></pre><img id="qr" hidden width="240" height="240" alt="预约核验二维码"><div class="actions"><button id="download">下载保管凭证</button><button id="copy-ticket">复制核验凭证</button><button id="retry-qr">重新加载二维码</button></div><p class="muted">本机二维码链接只在运行演示的电脑有效；用另一台手机扫码不会连接到此电脑。核验员可粘贴凭证进行演示。</p></div>
 </section>
 <section id="manage" class="panel" hidden><h2>凭保管凭证管理</h2><p>不接受手机号查找。没有保管凭证时，候选版不提供自动身份恢复。</p><form id="owner-form"><label>预约编号<input name="booking_id" autocomplete="off" maxlength="40" required></label><label>保管密钥<input type="password" name="management_secret" autocomplete="off" maxlength="100" required></label><div class="actions"><button type="submit">查看预约</button><button type="button" id="cancel">取消预约</button></div><label>临时取消原因<input name="reason" maxlength="200" placeholder="超过取消时限时，可申请管理员处理"></label><button type="button" id="cancel-request">提交取消申请</button></form><pre id="owner-result"></pre></section>
 <section id="staff" class="panel" hidden><h2>工作人员</h2><p>本地演示分别提供管理员与核验员合成账户。核验员不能查看全部预约或调整容量。</p><details id="demo-import"><summary>从本机演示文件填入账户</summary><p class="muted">仅选择本候选目录的 runtime/demo-access.txt。文件仅在当前页面读取，不上传、不保存到浏览器。</p><label>演示角色<select id="demo-role"><option value="demo-admin">管理员</option><option value="demo-verifier">核验员</option></select></label><label>本机演示账户文件<input type="file" id="demo-file" accept=".txt"></label></details><form id="login-form"><div class="grid"><label>账号<input name="username" autocomplete="username" required></label><label>演示密码<input name="password" type="password" autocomplete="current-password" required></label></div><button type="submit">登录</button></form><div id="staff-tools" hidden><p id="staff-role"></p><button id="logout">退出登录</button>
