@@ -1,5 +1,6 @@
 # Exact, reviewed local-source paths; no runtime or environment artifacts.
 .gitignore
+.github/workflows/ci.yml
 BACKUP.md
 DEPLOYMENT.md
 LICENSE
@@ -18,6 +19,7 @@ community_booking/demo.py
 community_booking/security.py
 community_booking/service.py
 community_booking/static/app.js
+community_booking/static/request.js
 community_booking/static/index.html
 community_booking/static/style.css
 config.example.json
@@ -25,6 +27,8 @@ requirements-lock.txt
 requirements-test.txt
 requirements.txt
 tests/test_core.py
+tests/test_release.py
+tests/test_request.cjs
 third_party_licenses/annotated-types-LICENSE
 third_party_licenses/anyio-LICENSE
 third_party_licenses/certifi-LICENSE

@@ -18,7 +18,7 @@
 
 ## 快速开始
 
-本次实际验证环境为 macOS / Python 3.14.2；其他 Python 版本和操作系统尚未验证。
+本轮维护实际验证了 macOS / Python 3.14.2 的全新虚拟环境安装；详细执行范围见 [TEST-RESULTS.md](TEST-RESULTS.md)。
 
 获取源码后，在项目根目录创建独立虚拟环境：
 
@@ -55,6 +55,8 @@ python3 -m venv .venv
 
 二维码链接包含 `127.0.0.1`，只在运行演示的电脑有效。另一台手机扫码不会连接到这台电脑。候选版提供手工粘贴核验，不启用摄像头；跨设备扫码不是本次验证范围。
 
+网络请求有 10 秒超时，不自动重试。预约已经成功后，即使二维码生成或可用时段刷新失败，保管凭证仍可下载；可单独点击“重新加载二维码”。写入响应丢失时页面会提示先核对结果，不能把超时当成操作未执行。系统目前没有预约创建的幂等重试或丢失凭证自动找回能力。
+
 ## 配置
 
 编辑 `runtime/config.json` 后重启。
@@ -70,16 +72,22 @@ python3 -m venv .venv
 ```sh
 .venv/bin/python -m unittest discover -s tests -v
 node --check community_booking/static/app.js
+node --check community_booking/static/request.js
+node --test tests/test_request.cjs
+.venv/bin/python -m pip check
+.venv/bin/python tools/check_release.py
 .venv/bin/python -m community_booking.backup --restore-check
 ```
 
-测试在系统临时目录建立全新数据库，并在结束后清理。不会访问远程服务。Node 只用于可选的 JS 语法检查，应用运行不需要 Node。
+测试在系统临时目录建立全新数据库，并在结束后清理。不会访问远程服务。Node 用于 JS 语法和网络回归检查，应用运行不需要 Node。
+
+网络回归使用 Node 24 自带的测试运行器，无需安装 npm 包。已添加 GitHub Actions 工作流，计划在 Linux/macOS、Python 3.12/3.14 上运行安装、Python/JS 回归、发布检查及合成初始化/备份检查。远程执行尚未运行，不展示通过徽章。
 
 更多说明见 [SECURITY.md](SECURITY.md)、[DEPLOYMENT.md](DEPLOYMENT.md)、[BACKUP.md](BACKUP.md)、[TEST-RESULTS.md](TEST-RESULTS.md)。
 
 ## 源码发布集合
 
-`RELEASE_ALLOWLIST.txt` 是明确文件清单。使用 `tools/check_release.py` 检查，使用 `--stage` 创建新的干净本地集合；已存在的目标不会被覆盖。
+`RELEASE_ALLOWLIST.txt` 是明确文件清单。检查器同时核对 Git 跟踪文件和未忽略的新文件、白名单路径及文本启发式扫描、`SHA256SUMS` 文件集合与实际摘要。使用 `--stage` 创建新的干净本地集合；已存在的目标不会被覆盖。
 
 ```sh
 .venv/bin/python tools/check_release.py
@@ -87,6 +95,8 @@ node --check community_booking/static/app.js
 ```
 
 不要整目录压缩当前工作副本。`runtime/`、`.venv/`、缓存、数据库和临时材料均不属于发布集合。发布清单只包含源码、合成配置示例、测试与文档。
+
+修改源码后先更新白名单、审阅差异，再显式运行 `.venv/bin/python tools/check_release.py --refresh-checksums` 并重新执行普通检查。普通检查和 CI 不会自动修正过期摘要。检查器不能替代人工秘密与权利审阅。
 
 ## 许可与贡献
 
